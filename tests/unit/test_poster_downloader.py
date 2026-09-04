@@ -102,161 +102,185 @@ def test_init_musicbrainz_sets_useragent(tmp_path, mocker):
 
 
 # ============================================================================
-# Tests for get_media_type_from_tags() - YAML frontmatter
+# Tests for get_media_type() - collection property
 # ============================================================================
 
-def test_get_media_type_from_yaml_movie(poster_downloader_tmdb, tmp_path):
-    """Test detecting movie tag from YAML frontmatter."""
+def test_get_media_type_movie(poster_downloader_tmdb, tmp_path):
+    """Test detecting movie from the collection property."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [movie, action]
----
-
-# Content
-""")
-
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'movie'
-
-
-def test_get_media_type_from_yaml_series(poster_downloader_tmdb, tmp_path):
-    """Test detecting series tag from YAML frontmatter."""
-    file = tmp_path / 'test.md'
-    file.write_text("""---
+collection: "[[Movies]]"
 tags:
-  - series
-  - comedy
+  - example
 ---
 
 # Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'series'
+    assert poster_downloader_tmdb.get_media_type(file) == 'movie'
 
 
-def test_get_media_type_from_yaml_game(poster_downloader_tmdb, tmp_path):
-    """Test detecting game tag from YAML frontmatter."""
+def test_get_media_type_series(poster_downloader_tmdb, tmp_path):
+    """Test detecting series from the collection property."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [game, rpg]
+collection: "[[Series]]"
+tags:
+  - example
 ---
 
 # Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'game'
+    assert poster_downloader_tmdb.get_media_type(file) == 'series'
 
 
-def test_get_media_type_from_yaml_album(poster_downloader_tmdb, tmp_path):
-    """Test detecting album tag from YAML frontmatter."""
+def test_get_media_type_game(poster_downloader_tmdb, tmp_path):
+    """Test detecting game from the collection property."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [album, rock]
+collection: "[[Games]]"
+tags:
+  - example
 ---
 
 # Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'album'
+    assert poster_downloader_tmdb.get_media_type(file) == 'game'
 
 
-def test_get_media_type_from_yaml_book(poster_downloader_tmdb, tmp_path):
-    """Test detecting book tag from YAML frontmatter."""
+def test_get_media_type_album(poster_downloader_tmdb, tmp_path):
+    """Test detecting album from the collection property."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [book, fiction]
+collection: "[[Albums]]"
+tags:
+  - example
 ---
 
 # Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'book'
+    assert poster_downloader_tmdb.get_media_type(file) == 'album'
 
 
-def test_get_media_type_from_hashtag_book(poster_downloader_tmdb, tmp_path):
-    """Test detecting book from hashtag format."""
+def test_get_media_type_book(poster_downloader_tmdb, tmp_path):
+    """Test detecting book from the collection property."""
     file = tmp_path / 'test.md'
-    file.write_text("""# Title
+    file.write_text("""---
+collection: "[[Books]]"
+tags:
+  - example
+---
 
-A great #book I read.
+# Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'book'
+    assert poster_downloader_tmdb.get_media_type(file) == 'book'
 
 
 def test_get_media_type_case_insensitive(poster_downloader_tmdb, tmp_path):
-    """Test that tag detection is case insensitive."""
+    """Test that collection matching is case insensitive."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [MOVIE, Action]
+collection: "[[movies]]"
 ---
 
 # Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'movie'
+    assert poster_downloader_tmdb.get_media_type(file) == 'movie'
 
 
-# ============================================================================
-# Tests for get_media_type_from_tags() - Hashtag format
-# ============================================================================
-
-def test_get_media_type_from_hashtag_movie(poster_downloader_tmdb, tmp_path):
-    """Test detecting movie from hashtag format."""
-    file = tmp_path / 'test.md'
-    file.write_text("""# Movie Title
-
-This is about a #movie
-""")
-
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'movie'
-
-
-def test_get_media_type_from_hashtag_series(poster_downloader_tmdb, tmp_path):
-    """Test detecting series from hashtag format."""
-    file = tmp_path / 'test.md'
-    file.write_text("""# Show Title
-
-This is a #series I watched.
-""")
-
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'series'
-
-
-def test_get_media_type_yaml_takes_priority(poster_downloader_tmdb, tmp_path):
-    """Test that YAML tags take priority over hashtags."""
+def test_get_media_type_with_alias(poster_downloader_tmdb, tmp_path):
+    """Test that a wikilink alias is stripped before matching."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [movie]
+collection: "[[Movies|Films]]"
 ---
 
-This is actually about a #series
+# Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type == 'movie'
+    assert poster_downloader_tmdb.get_media_type(file) == 'movie'
 
 
-def test_get_media_type_no_tags(poster_downloader_tmdb, tmp_path):
-    """Test file with no media tags."""
+def test_get_media_type_with_folder_prefix(poster_downloader_tmdb, tmp_path):
+    """Test that a folder prefix is stripped before matching."""
     file = tmp_path / 'test.md'
     file.write_text("""---
-tags: [note, general]
+collection: "[[Collections/Movies]]"
 ---
 
-# Just a note
+# Content
 """)
 
-    media_type = poster_downloader_tmdb.get_media_type_from_tags(file)
-    assert media_type is None
+    assert poster_downloader_tmdb.get_media_type(file) == 'movie'
+
+
+def test_get_media_type_unquoted(poster_downloader_tmdb, tmp_path):
+    """Test an unquoted collection value."""
+    file = tmp_path / 'test.md'
+    file.write_text("""---
+collection: [[Games]]
+---
+
+# Content
+""")
+
+    assert poster_downloader_tmdb.get_media_type(file) == 'game'
+
+
+def test_get_media_type_non_media_collection(poster_downloader_tmdb, tmp_path):
+    """Test that a non-media collection yields no media type."""
+    file = tmp_path / 'test.md'
+    file.write_text("""---
+collection: "[[Lookups]]"
+---
+
+# Content
+""")
+
+    assert poster_downloader_tmdb.get_media_type(file) is None
+
+
+def test_get_media_type_no_collection(poster_downloader_tmdb, tmp_path):
+    """Test file with frontmatter but no collection."""
+    file = tmp_path / 'test.md'
+    file.write_text("""---
+tags:
+  - note
+  - general
+---
+
+# Content
+""")
+
+    assert poster_downloader_tmdb.get_media_type(file) is None
+
+
+def test_get_media_type_type_tag_is_not_enough(poster_downloader_tmdb, tmp_path):
+    """Test that a legacy type tag alone no longer identifies media."""
+    file = tmp_path / 'test.md'
+    file.write_text("""---
+tags:
+  - movie
+  - action
+---
+
+# Content
+""")
+
+    assert poster_downloader_tmdb.get_media_type(file) is None
+
+
+def test_get_media_type_no_frontmatter(poster_downloader_tmdb, tmp_path):
+    """Test file with no frontmatter at all."""
+    file = tmp_path / 'test.md'
+    file.write_text("# Just a note\n\nSome prose.\n")
+
+    assert poster_downloader_tmdb.get_media_type(file) is None
 
 
 # ============================================================================
@@ -312,16 +336,16 @@ def test_find_media_files(poster_downloader_tmdb, tmp_path, capsys):
     """Test finding media files in vault."""
     # Create test files
     movie1 = tmp_path / 'Movie1.md'
-    movie1.write_text('---\ntags: [movie]\n---\n# Movie1')
+    movie1.write_text('---\ncollection: "[[Movies]]"\n---\n# Movie1')
 
     movie2 = tmp_path / 'Movie2.md'
-    movie2.write_text('---\ntags: [movie]\nposter: [[movie2.jpg]]\n---\n# Movie2')
+    movie2.write_text('---\ncollection: "[[Movies]]"\nposter: [[movie2.jpg]]\n---\n# Movie2')
 
     series1 = tmp_path / 'Series1.md'
-    series1.write_text('---\ntags: [series]\n---\n# Series1')
+    series1.write_text('---\ncollection: "[[Series]]"\n---\n# Series1')
 
     other = tmp_path / 'Other.md'
-    other.write_text('---\ntags: [note]\n---\n# Other')
+    other.write_text('---\ncollection: "[[Lookups]]"\n---\n# Other')
 
     files = poster_downloader_tmdb.find_media_files()
 
@@ -344,7 +368,7 @@ def test_find_media_files_recursive(poster_downloader_tmdb, tmp_path):
     subdir.mkdir()
 
     movie = subdir / 'Movie.md'
-    movie.write_text('---\ntags: [movie]\n---\n# Movie')
+    movie.write_text('---\ncollection: "[[Movies]]"\n---\n# Movie')
 
     files = poster_downloader_tmdb.find_media_files()
 

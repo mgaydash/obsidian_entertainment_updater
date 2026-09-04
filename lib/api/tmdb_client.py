@@ -4,7 +4,13 @@ from typing import Dict, List, Optional
 
 import requests
 
-from ..obsidian_utils import format_wikilink, get_user_input, sanitize_filename, translate_genre_tag
+from ..obsidian_utils import (
+    build_frontmatter,
+    format_wikilink,
+    get_user_input,
+    sanitize_filename,
+    translate_genre_tag,
+)
 from .base import MediaAPIClient
 
 
@@ -125,10 +131,6 @@ class TMDBClient(MediaAPIClient):
         # Build tags list
         tags = []
 
-        # Add media type tag
-        media_tag = 'movie' if self.media_type == 'movie' else 'series'
-        tags.append(media_tag)
-
         # Add genre tags
         genres = details.get('genres', [])
         for genre in genres:
@@ -138,14 +140,9 @@ class TMDBClient(MediaAPIClient):
                 if tag and tag not in tags:
                     tags.append(tag)
 
-        # Format tags for YAML
-        tags_yaml = '\n'.join([f'  - {tag}' for tag in tags])
-
         # Format the content
-        content = f"""---
-tags:
-{tags_yaml}
----
+        collection = 'Movies' if self.media_type == 'movie' else 'Series'
+        content = f"""{build_frontmatter(collection, tags)}
 
 ## Links
 {imdb_link}

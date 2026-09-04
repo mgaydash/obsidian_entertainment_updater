@@ -343,7 +343,7 @@ def test_format_note_content(igdb_client, game_details):
     # Check YAML frontmatter
     assert content.startswith('---')
     assert 'tags:' in content
-    assert '  - game' in content
+    assert 'collection: "[[Games]]"' in content
 
     # Check sections
     assert '## Links' in content
@@ -472,7 +472,7 @@ def test_format_note_content_genres(igdb_client):
 
     # Genres should be translated by translate_genre_tag
     # Exact tags depend on genre_mappings.yaml
-    assert '  - game' in content
+    assert 'collection: "[[Games]]"' in content
 
 
 # ============================================================================

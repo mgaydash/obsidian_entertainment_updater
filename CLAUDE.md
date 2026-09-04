@@ -418,15 +418,28 @@ Both 'add' and 'posters' commands use intelligent disambiguation:
 - Volume details: `https://www.googleapis.com/books/v1/volumes/{volume_id}` — a single request with no extra author/edition lookups. Descriptions may contain simple HTML, which is stripped. Year comes from `self._earliest_years` (populated by `search()`), falling back to the volume's own `publishedDate` when called outside a search flow.
 - Covers come from `volumeInfo.imageLinks` (largest of `extraLarge`→`smallThumbnail`), forced to HTTPS with the `&edge=curl` page-curl overlay stripped (returns None when the volume has no cover)
 - Filename format: `Author - Title (Year).md` (matches album convention, since duplicate book titles by different authors are common)
-- Tag: `book` (singular)
+- Collection: `collection: "[[Books]]"`
 
-### Tag Detection
+### Media Type Detection
 
-Scripts search for `movie`, `series`, `game`, `album`, or `book` tags in:
-1. YAML frontmatter: `tags: [movie]`
-2. Hashtag format: `#movie`
+Media type comes from the note's `collection` property, not from a tag:
 
-Note: Avoids 'entertainment' tag (deprecated).
+| Collection | Media type |
+| --- | --- |
+| `[[Movies]]` | movie |
+| `[[Series]]` | series |
+| `[[Games]]` | game |
+| `[[Albums]]` | album |
+| `[[Books]]` | book |
+
+`collection` is the note's identity — exactly one, always — so it, not a tag,
+is what says which API can describe a note. Matching is case-insensitive and
+strips any alias (`[[Movies|Films]]`) or folder prefix. A note in a non-media
+collection, or with no collection, yields no media type.
+
+Note: the `movie`/`series`/`game`/`album`/`book` type tags and the
+`entertainment` tag were retired when the vault moved to collections; `tags`
+now carry only facets (genre, play-mode, and so on).
 
 ### Poster Download Workflow
 

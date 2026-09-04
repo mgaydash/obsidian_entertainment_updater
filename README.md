@@ -136,8 +136,7 @@ For "Inception (2010)":
 
 ```markdown
 ---
-tags:
-  - movie
+collection: "[[Movies]]"
 ---
 
 ## Links
@@ -153,8 +152,8 @@ titles shared by different books) and link to Google Books:
 
 ```markdown
 ---
+collection: "[[Books]]"
 tags:
-  - book
   - fiction
   - sci-fi
 ---

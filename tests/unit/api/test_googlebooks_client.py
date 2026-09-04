@@ -399,7 +399,7 @@ def test_format_note_content_full(gb_client):
     content = gb_client.format_note_content(details)
 
     assert content.startswith('---')
-    assert '  - book' in content
+    assert 'collection: "[[Books]]"' in content
     assert '## Links' in content
     assert 'books.google.com' in content
     assert '## Description' in content

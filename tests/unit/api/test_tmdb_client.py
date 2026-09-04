@@ -272,7 +272,7 @@ def test_format_note_content_movie(tmdb_client, movie_details):
     # Check YAML frontmatter
     assert content.startswith('---')
     assert 'tags:' in content
-    assert '  - movie' in content
+    assert 'collection: "[[Movies]]"' in content
 
     # Check sections
     assert '## Links' in content
@@ -290,7 +290,7 @@ def test_format_note_content_movie_genre_tags(tmdb_client, movie_details):
     content = tmdb_client.format_note_content(movie_details)
 
     # Should include movie tag and genres
-    assert '  - movie' in content
+    assert 'collection: "[[Movies]]"' in content
     # Genres should be translated by translate_genre_tag
     # (exact tags depend on genre_mappings.yaml)
 
@@ -355,7 +355,7 @@ def test_format_note_content_tv(tmdb_tv_client, tv_details):
     # Check YAML frontmatter
     assert content.startswith('---')
     assert 'tags:' in content
-    assert '  - series' in content
+    assert 'collection: "[[Series]]"' in content
 
     # Check sections
     assert '## Links' in content

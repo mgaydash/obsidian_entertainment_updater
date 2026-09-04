@@ -6,7 +6,13 @@ from typing import Dict, List, Optional
 import requests
 from igdb.wrapper import IGDBWrapper
 
-from ..obsidian_utils import format_wikilink, get_user_input, sanitize_filename, translate_genre_tag
+from ..obsidian_utils import (
+    build_frontmatter,
+    format_wikilink,
+    get_user_input,
+    sanitize_filename,
+    translate_genre_tag,
+)
 from .base import MediaAPIClient
 
 
@@ -147,7 +153,7 @@ class IGDBClient(MediaAPIClient):
         description = f"{summary} Developed by {dev_text}. Published by {pub_text}."
 
         # Build tags list
-        tags = ['game']
+        tags = []
 
         # Add game mode tags
         game_modes = details.get('game_modes', [])
@@ -172,14 +178,8 @@ class IGDBClient(MediaAPIClient):
                 if tag and tag not in tags:
                     tags.append(tag)
 
-        # Format tags for YAML
-        tags_yaml = '\n'.join([f'  - {tag}' for tag in tags])
-
         # Format the content
-        content = f"""---
-tags:
-{tags_yaml}
----
+        content = f"""{build_frontmatter('Games', tags)}
 
 ## Links
 {igdb_url}

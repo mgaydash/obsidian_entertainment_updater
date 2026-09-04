@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** new notes declare a collection (`collection: "[[Movies]]"`) instead of carrying a media type tag. `tags` now hold only facets — genre, play-mode, and so on — and the key is omitted entirely when a note has none.
+- **Breaking:** media type is read from `collection` rather than from `movie`/`series`/`game`/`album`/`book` tags or `#hashtag` text. Matching is case-insensitive and tolerates a wikilink alias (`[[Movies|Films]]`) or folder prefix.
+- `PosterDownloader.get_media_type_from_tags()` renamed to `get_media_type()`, since it no longer reads tags.
+
+### Added
+- `build_frontmatter()` in `lib/obsidian_utils.py`, shared by all four API clients.
+
+### Fixed
+- Poster downloading silently found no files in a vault migrated to `collection`: detection still required the retired type tags, so every note returned no media type.
+
 ## [1.3.0] - 2026-07-20
 
 ### Added

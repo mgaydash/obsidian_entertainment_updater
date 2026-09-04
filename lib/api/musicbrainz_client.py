@@ -4,7 +4,13 @@ from typing import Dict, List, Optional
 
 import musicbrainzngs
 
-from ..obsidian_utils import format_wikilink, get_user_input, sanitize_filename, translate_genre_tag
+from ..obsidian_utils import (
+    build_frontmatter,
+    format_wikilink,
+    get_user_input,
+    sanitize_filename,
+    translate_genre_tag,
+)
 from .base import MediaAPIClient
 
 
@@ -167,7 +173,7 @@ class MusicBrainzClient(MediaAPIClient):
         mb_url = f"https://musicbrainz.org/release/{mbid}" if mbid else "Not available"
 
         # Build tags list
-        tags = ['album']
+        tags = []
 
         # Add type-based tags
         secondary_types = details.get('secondary_types', [])
@@ -185,9 +191,6 @@ class MusicBrainzClient(MediaAPIClient):
             if genre_tag and genre_tag not in tags:
                 tags.append(genre_tag)
 
-        # Format tags for YAML
-        tags_yaml = '\n'.join([f'  - {tag}' for tag in tags])
-
         # Build description
         artist = details.get('artist', 'Unknown')
         label = details.get('label', 'Independent')
@@ -196,10 +199,7 @@ class MusicBrainzClient(MediaAPIClient):
         description = f"By {format_wikilink(artist)}. Released by {format_wikilink(label)}."
 
         # Format the content
-        content = f"""---
-tags:
-{tags_yaml}
----
+        content = f"""{build_frontmatter('Albums', tags)}
 
 ## Links
 {mb_url}

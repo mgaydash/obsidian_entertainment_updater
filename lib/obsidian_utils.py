@@ -24,6 +24,39 @@ def extract_yaml_frontmatter(content: str) -> Tuple[Optional[Dict], str]:
         return None, content
 
 
+COLLECTION_BY_MEDIA_TYPE = {
+    'movie': 'Movies',
+    'tv': 'Series',
+    'series': 'Series',
+    'game': 'Games',
+    'book': 'Books',
+    'album': 'Albums',
+}
+
+
+def build_frontmatter(collection: str, tags: List[str]) -> str:
+    """
+    Build YAML frontmatter declaring the note's collection, plus any facet tags.
+
+    `collection` is the note's identity — exactly one, always. `tags` carry
+    everything else (genre, play-mode, and so on) and the key is omitted
+    entirely when there are none.
+
+    Args:
+        collection: Collection note name, e.g. 'Movies'
+        tags: Facet tags, excluding the media type
+
+    Returns:
+        Frontmatter block, including the delimiting '---' lines
+    """
+    lines = ['---', f'collection: "[[{collection}]]"']
+    if tags:
+        lines.append('tags:')
+        lines.extend(f'  - {tag}' for tag in tags)
+    lines.append('---')
+    return '\n'.join(lines)
+
+
 def sanitize_filename(title: str) -> str:
     """Sanitize title for filesystem (remove problematic characters)."""
     return title.replace(':', ' -').replace('/', '-').replace('\\', '-').replace('?', '')

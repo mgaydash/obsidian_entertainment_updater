@@ -392,7 +392,7 @@ def test_format_note_content(mb_client):
     # Check YAML frontmatter
     assert content.startswith('---')
     assert 'tags:' in content
-    assert '  - album' in content
+    assert 'collection: "[[Albums]]"' in content
 
     # Check sections
     assert '## Links' in content

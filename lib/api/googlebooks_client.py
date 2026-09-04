@@ -6,7 +6,13 @@ from typing import Dict, List, Optional
 
 import requests
 
-from ..obsidian_utils import format_wikilink, get_user_input, sanitize_filename, translate_genre_tag
+from ..obsidian_utils import (
+    build_frontmatter,
+    format_wikilink,
+    get_user_input,
+    sanitize_filename,
+    translate_genre_tag,
+)
 from .base import MediaAPIClient
 
 
@@ -199,13 +205,11 @@ class GoogleBooksClient(MediaAPIClient):
         """Generate markdown content for the book note."""
         info_link = details.get('info_link') or "Not available"
 
-        tags = ['book']
+        tags = []
         for subject in details.get('subjects', []) or []:
             tag = translate_genre_tag(subject)
             if tag and tag not in tags:
                 tags.append(tag)
-
-        tags_yaml = '\n'.join([f'  - {tag}' for tag in tags])
 
         author = details.get('author', 'Unknown')
         description = (details.get('description') or '').strip()
@@ -215,10 +219,7 @@ class GoogleBooksClient(MediaAPIClient):
         else:
             desc_text = f"By {format_wikilink(author)}."
 
-        return f"""---
-tags:
-{tags_yaml}
----
+        return f"""{build_frontmatter('Books', tags)}
 
 ## Links
 {info_link}

@@ -19,6 +19,14 @@ from .poster_utils import (
     update_frontmatter_with_poster,
 )
 
+MEDIA_TYPE_BY_COLLECTION = {
+    'movies': 'movie',
+    'series': 'series',
+    'games': 'game',
+    'books': 'book',
+    'albums': 'album',
+}
+
 
 class PosterDownloader:
     """Download and manage posters for media notes."""
@@ -77,51 +85,44 @@ class PosterDownloader:
         response.raise_for_status()
         return response.json()['access_token']
 
-    def get_media_type_from_tags(self, file_path: Path) -> Optional[str]:
+    def get_media_type(self, file_path: Path) -> Optional[str]:
         """
-        Get media type from file tags ('movie', 'series', 'game', 'album', or 'book').
+        Get media type from the note's `collection` property.
+
+        Collection is the note's identity — `collection: "[[Movies]]"` and so
+        on — so it, not a tag, is what says which API can describe the note.
 
         Args:
             file_path: Path to markdown file
 
         Returns:
-            'movie', 'series', 'game', 'album', 'book', or None if no matching tag found
+            'movie', 'series', 'game', 'album', 'book', or None if the note
+            has no collection or belongs to a non-media one
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            # Check YAML frontmatter
             frontmatter, remaining = extract_yaml_frontmatter(content)
-            if frontmatter and 'tags' in frontmatter:
-                tags = frontmatter['tags']
-                if isinstance(tags, list):
-                    tags_lower = [str(t).lower() for t in tags]
-                    if 'movie' in tags_lower:
-                        return 'movie'
-                    if 'series' in tags_lower:
-                        return 'series'
-                    if 'game' in tags_lower:
-                        return 'game'
-                    if 'album' in tags_lower:
-                        return 'album'
-                    if 'book' in tags_lower:
-                        return 'book'
+            if not frontmatter:
+                return None
 
-            # Check hashtag format
-            full_content = content.lower()
-            if '#movie' in full_content:
-                return 'movie'
-            if '#series' in full_content:
-                return 'series'
-            if '#game' in full_content:
-                return 'game'
-            if '#album' in full_content:
-                return 'album'
-            if '#book' in full_content:
-                return 'book'
+            collection = frontmatter.get('collection')
+            if not collection:
+                return None
 
-            return None
+            # Unquoted `collection: [[Movies]]` is a nested list to YAML, not a
+            # string, so flatten before treating it as a wikilink
+            while isinstance(collection, list) and collection:
+                collection = collection[0]
+
+            # Strip the wikilink, plus any alias or folder prefix
+            name = str(collection).strip().strip('"\'')
+            if name.startswith('[[') and name.endswith(']]'):
+                name = name[2:-2]
+            name = name.split('|')[0].split('/')[-1].strip()
+
+            return MEDIA_TYPE_BY_COLLECTION.get(name.lower())
         except Exception as e:
             print(f"Error reading {file_path}: {e}")
             return None
@@ -145,7 +146,7 @@ class PosterDownloader:
 
     def find_media_files(self) -> List[Tuple[Path, str]]:
         """
-        Find all markdown files with media tags (movie, series, game, album) that need posters.
+        Find all markdown files in a media collection that need posters.
 
         Returns:
             List of tuples (file_path, media_type)
@@ -153,7 +154,7 @@ class PosterDownloader:
         media_files = []
 
         for md_file in self.vault_path.rglob('*.md'):
-            media_type = self.get_media_type_from_tags(md_file)
+            media_type = self.get_media_type(md_file)
             if not media_type:
                 continue
 
